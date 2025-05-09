@@ -4,10 +4,10 @@ import * as proc from "child_process";
 import path from 'node:path';
 
 const execShell = (cmd: string, cwd: string) =>
-    new Promise<string>((resolve, reject) => {
-        proc.exec(
+	new Promise<string>((resolve, reject) => {
+		proc.exec(
 			cmd,
-			{cwd: cwd},
+			{ cwd: cwd },
 			(err, out) => {
 				if (err) {
 					return reject(err);
@@ -15,27 +15,27 @@ const execShell = (cmd: string, cwd: string) =>
 				return resolve(out);
 			},
 		);
-    });
+	});
 
 async function setInterpreter() {
 	let activedoc = vscode.window.activeTextEditor?.document;
-	if(!activedoc) {
+	if (!activedoc) {
 		return;
 	}
-	if(!(activedoc.fileName.toLowerCase().endsWith(".py"))) {
+	if (!(activedoc.fileName.toLowerCase().endsWith(".py"))) {
 		return;
 	}
 	console.log("finding uv environment for " + activedoc.fileName);
 	let env_path: string;
 	let cwd = path.dirname(activedoc.fileName);
 	let is_script = false;
-	for(let i=0; i < Math.min(50, activedoc.lineCount); i++) {
-		if(activedoc.lineAt(i).text.toLowerCase().trim() === "# /// script") {
+	for (let i = 0; i < Math.min(50, activedoc.lineCount); i++) {
+		if (activedoc.lineAt(i).text.toLowerCase().trim() === "# /// script") {
 			is_script = true;
 			break;
 		}
 	}
-	if(is_script) {
+	if (is_script) {
 		env_path = (await execShell("uv python find --script \"" + activedoc.fileName + "\"", cwd)).trim();
 	} else {
 		env_path = (await execShell("uv python find", cwd)).trim();
@@ -68,7 +68,7 @@ function toggleTrackingActiveFile(activate: boolean | undefined = undefined) {
 		setInterpreter();
 		g_fileChangeListener = vscode.window.onDidChangeActiveTextEditor(setInterpreter);
 	} else {
-		if(g_fileChangeListener) {
+		if (g_fileChangeListener) {
 			g_fileChangeListener.dispose();
 			g_fileChangeListener = undefined;
 		}
@@ -84,7 +84,7 @@ function updateStatusBarItem() {
 		g_statusBarItem.color = '#00FF00'; // Green color for enabled
 	} else {
 		g_statusBarItem.text = '$(x) uvscode auto (off)';
-	  	g_statusBarItem.color = '#FF0000'; // Red color for disabled
+		g_statusBarItem.color = '#FF0000'; // Red color for disabled
 	}
 	g_statusBarItem.show();
 }
@@ -93,18 +93,18 @@ var terminal: vscode.Terminal | undefined = undefined;
 
 function run() {
 	let activedoc = vscode.window.activeTextEditor?.document;
-	if(!activedoc) {
+	if (!activedoc) {
 		return;
 	}
-	if(!(activedoc.fileName.toLowerCase().endsWith(".py"))) {
+	if (!(activedoc.fileName.toLowerCase().endsWith(".py"))) {
 		return;
 	}
-	if(terminal !== undefined) {
-		if(terminal.exitStatus !== undefined) {
+	if (terminal !== undefined) {
+		if (terminal.exitStatus !== undefined) {
 			terminal = undefined;
 		}
 	}
-	if(terminal === undefined) {
+	if (terminal === undefined) {
 		terminal = vscode.window.terminals.find(term => term.name === "uvscode");
 		if (terminal === undefined) {
 			terminal = vscode.window.createTerminal("uvscode");
@@ -118,27 +118,27 @@ function run() {
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('"uvscode" loaded!');
-	
+
 	// Commands have been defined in package.json
 
 	g_trackActiveFile = vscode.workspace.getConfiguration().get("uvscode.autoSetInterpreter", true);
 	g_statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-	
+
 	context.subscriptions.push(g_statusBarItem);
 	g_statusBarItem.command = 'uvscode.toggleTrackingActiveFile';
 	updateStatusBarItem();
-	
+
 	context.subscriptions.push(vscode.commands.registerCommand('uvscode.run', run));
 	context.subscriptions.push(vscode.commands.registerCommand('uvscode.toggleTrackingActiveFile', toggleTrackingActiveFile));
 	toggleTrackingActiveFile(g_trackActiveFile);
 	context.subscriptions.push(vscode.commands.registerCommand('uvscode.setInterpreter', setInterpreter));
-	if(g_trackActiveFile) {
+	if (g_trackActiveFile) {
 		setInterpreter();
 	}
 }
 
 export function deactivate() {
-	if(g_fileChangeListener) {
+	if (g_fileChangeListener) {
 		g_fileChangeListener.dispose();
 	}
 }
